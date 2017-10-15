@@ -35,7 +35,10 @@ pub fn play_raw<S>(endpoint: &Endpoint, source: S)
                 .name("rodio audio processing".to_string())
                 .spawn({
                     let events_loop = events_loop.clone();
-                    move || events_loop.run()
+                    move || {
+                        max_thread_priority();
+                        events_loop.run()
+                    }
                 })
                 .ok()
                 .map(|jg| jg.thread().clone());
@@ -48,6 +51,40 @@ pub fn play_raw<S>(endpoint: &Endpoint, source: S)
     }
 
     ENGINE.start(endpoint, source);
+}
+
+#[cfg(not(windows))]
+fn max_thread_priority() {
+    use thread_priority::{
+        set_thread_priority,
+        thread_native_id,
+        ThreadPriority,
+        ThreadSchedulePolicy,
+        NormalThreadSchedulePolicy,
+    };
+
+    let result = set_thread_priority(
+        thread_native_id(),
+        ThreadPriority::Max,
+        ThreadSchedulePolicy::Normal(NormalThreadSchedulePolicy::Normal)
+    );
+    if let Err(err) = result {
+        eprintln!("Unable to set thread priority for audio engine: {:?}", err);
+    }
+}
+
+#[cfg(windows)]
+fn max_thread_priority() {
+    use kernel32::{
+        SetThreadPriority,
+        GetCurrentThread,
+    };
+    use winapi::winbase::THREAD_PRIORITY_TIME_CRITICAL;
+    unsafe {
+        if SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL as i32) == 0 {
+            eprintln!("Unable to set thread priority for audio engine.");
+        }
+    }
 }
 
 // The internal engine of this library.

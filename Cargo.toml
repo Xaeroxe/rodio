@@ -16,3 +16,10 @@ hound = "1.0.0"
 lazy_static = "0.1.12"
 lewton = "0.5"
 cgmath = "0.14"
+
+[target.'cfg(not(windows))'.dependencies]
+thread-priority = "0.1"
+
+[target.'cfg(windows)'.dependencies]
+winapi = "0.2"
+kernel32-sys = "0.2"

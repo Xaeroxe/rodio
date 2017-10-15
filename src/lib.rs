@@ -92,6 +92,14 @@ extern crate lazy_static;
 extern crate lewton;
 extern crate cgmath;
 
+#[cfg(not(windows))]
+extern crate thread_priority;
+
+#[cfg(windows)]
+extern crate kernel32;
+#[cfg(windows)]
+extern crate winapi;
+
 pub use cpal::{Endpoint, default_endpoint, endpoints, get_default_endpoint, get_endpoints_list};
 
 pub use conversions::Sample;
